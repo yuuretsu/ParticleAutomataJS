@@ -88,3 +88,87 @@ button + button {
 button:hover {
   background-color: rgba(255, 255, 255, 0.5);
 }
+
+.couplings-row {
+  display: flex;
+  height: 26px;
+}
+
+.couplings-row * {
+  width: 25px;
+}
+
+.couplings-row ::-webkit-inner-spin-button {
+  display: none;
+}
+
+.dispay-none {
+  display: none;
+}
+
+table {
+  width: 100%;
+  border-spacing: 0;
+}
+
+td {
+  width: 26px;
+  background-color: rgb(255 255 255 / 30%);
+}
+
+td > input {
+  text-align: right;
+  background-color: transparent;
+  display: block;
+  margin: 0;
+  padding: 0;
+  padding-right: 9px;
+  height: 100%;
+  border: none;
+  border-radius: 0;
+  transition-duration: 0.1s;
+}
+
+td > input:focus {
+  border: none;
+  outline: none;
+  background-color: #fff;
+  transform: scale(1.2);
+}
+
+.table-label {
+  font-weight: bold;
+  text-align: center;
+}
+
+.max-links-input {
+  display: flex;
+  height: 26px;
+}
+
+.max-links-input span {
+  line-height: 26px;
+  width: 25px;
+}
+
+.max-links-input input {
+  /* width: 100%; */
+  margin: 0;
+  padding: 0 10px;
+  border: none;
+  background-color: rgb(255 255 255 / 30%);
+}
+
+.max-links-input input:focus {
+  border: none;
+  outline: none;
+  background-color: #fff;
+}
+
+.max-links-input input::-webkit-inner-spin-button {
+  display: none;
+}
+
+.compact-inputs {
+  margin-bottom: 10px !important;
+}
