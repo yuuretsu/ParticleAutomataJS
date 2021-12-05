@@ -27,7 +27,7 @@
     "#fa96d2",
     "#828282",
     "green",
-    "white",
+    "rgb(200, 200, 200)",
   ];
 
   let showSettings = true;
@@ -39,7 +39,7 @@
     Number(new URLSearchParams(location.search).get("max_dist")) || 100;
   let speedMultiplier =
     Number(new URLSearchParams(location.search).get("temperature")) || 4;
-  const BORDER = 10;
+  let BORDER = 10;
   let selectedId = 0;
 
   let friction =
@@ -54,15 +54,21 @@
   let fh = height / MAX_DIST + 1;
 
   let RULE_SIZE = 3;
-  let MAX_LINKS = [];
+  let MAX_LINKS: number[] = [];
   let COUPLINGS: number[][] = [];
-  let MAX_LINKS_PER_COLOR = [];
+  let MAX_LINKS_PER_COLOR: number[][] = [];
 
   let links: { a: Particle; b: Particle }[] = [];
   let fields: Particle[][][] = [];
 
   let settingRuleSize = writable(3);
   let simulationsPerFrame = 5;
+
+  let linkDistance = 1;
+
+  let play = true;
+
+  let connectBorders = false;
 
   if (location.hash) {
     let hash = location.hash.substring(1).split("-");
@@ -134,6 +140,7 @@
         MAX_LINKS_PER_COLOR[i].push(~~(Math.random() * 4));
       }
     }
+    // console.log(MAX_LINKS_PER_COLOR);
   }
 
   function copyRules() {
@@ -168,7 +175,16 @@
   }
 
   function addParticle(x: number, y: number, type: number) {
-    let a: Particle = { x, y, type, sx: 0, sy: 0, bonds: [] };
+    let a: Particle = {
+      x,
+      y,
+      lastX: x,
+      lastY: y,
+      type,
+      sx: 0,
+      sy: 0,
+      bonds: [],
+    };
     const fx = Math.floor(x / MAX_DIST);
     const fy = Math.floor(y / MAX_DIST);
     fields[fx][fy].push(a);
@@ -195,7 +211,7 @@
         a.bonds.length < MAX_LINKS[a.type] &&
         b.bonds.length < MAX_LINKS[b.type]
       ) {
-        if (dist2 < maxDist2 / 4) {
+        if (dist2 < (maxDist2 / 4) * linkDistance) {
           if (a.bonds.indexOf(b) === -1 && b.bonds.indexOf(a) === -1) {
             let typeCountA = 0;
             a.bonds.forEach((bond) => {
@@ -242,6 +258,22 @@
           a.lastY = a.y;
           a.x += a.sx;
           a.y += a.sy;
+          if (connectBorders) {
+            if (a.x < BORDER) {
+              a.x = width - BORDER;
+              a.sx * -1;
+            } else if (a.x > width - BORDER) {
+              a.x = BORDER;
+              a.sx * -1;
+            }
+            if (a.y < BORDER) {
+              a.y = height - BORDER;
+              a.sy * -1;
+            } else if (a.y > height - BORDER) {
+              a.y = BORDER;
+              a.sy * -1;
+            }
+          }
           a.sx *= friction;
           a.sy *= friction;
           const magnitude = Math.sqrt(a.sx * a.sx + a.sy * a.sy);
@@ -249,30 +281,32 @@
             a.sx /= magnitude;
             a.sy /= magnitude;
           }
-          if (a.x < BORDER) {
-            a.sx += speedMultiplier * 0.05;
-            if (a.x < 0) {
-              a.x = -a.x;
-              a.sx *= -0.5;
+          if (!connectBorders) {
+            if (a.x < BORDER) {
+              a.sx += speedMultiplier * 0.05;
+              if (a.x < 0) {
+                a.x = -a.x;
+                a.sx *= -0.5;
+              }
+            } else if (a.x > width - BORDER) {
+              a.sx -= speedMultiplier * 0.05;
+              if (a.x > width) {
+                a.x = width * 2 - a.x;
+                a.sx *= -0.5;
+              }
             }
-          } else if (a.x > width - BORDER) {
-            a.sx -= speedMultiplier * 0.05;
-            if (a.x > width) {
-              a.x = width * 2 - a.x;
-              a.sx *= -0.5;
-            }
-          }
-          if (a.y < BORDER) {
-            a.sy += speedMultiplier * 0.05;
-            if (a.y < 0) {
-              a.y = -a.y;
-              a.sy *= -0.5;
-            }
-          } else if (a.y > height - BORDER) {
-            a.sy -= speedMultiplier * 0.05;
-            if (a.y > height) {
-              a.y = height * 2 - a.y;
-              a.sy *= -0.5;
+            if (a.y < BORDER) {
+              a.sy += speedMultiplier * 0.05;
+              if (a.y < 0) {
+                a.y = -a.y;
+                a.sy *= -0.5;
+              }
+            } else if (a.y > height - BORDER) {
+              a.sy -= speedMultiplier * 0.05;
+              if (a.y > height) {
+                a.y = height * 2 - a.y;
+                a.sy *= -0.5;
+              }
             }
           }
         }
@@ -285,7 +319,7 @@
       const dx = a.x - b.x;
       const dy = a.y - b.y;
       let dist2 = dx * dx + dy * dy;
-      if (dist2 > maxDist2 / 4) {
+      if (dist2 > (maxDist2 / 4) * linkDistance) {
         removeFromArray(a.bonds, b);
         removeFromArray(b.bonds, a);
         removeFromArray(links, link);
@@ -355,10 +389,16 @@
   }
 
   function update() {
-    for (let i = 0; i < simulationsPerFrame; i++) logic();
+    if (play) {
+      for (let i = 0; i < simulationsPerFrame; i++) logic();
+    }
     fields = [...fields];
     window.requestAnimationFrame(update);
   }
+
+  let controlsHidden = true;
+
+  $: addParticlesAmount = COLORS.map(() => 0);
 
   // $: {
   //   const searchParams = new URLSearchParams(
@@ -375,7 +415,13 @@
   // }
 </script>
 
-<svelte:window bind:innerWidth={width} bind:innerHeight={height} />
+<svelte:window
+  bind:innerWidth={width}
+  bind:innerHeight={height}
+  on:mousemove={({ clientX }) => {
+    controlsHidden = clientX > 500;
+  }}
+/>
 <main>
   <Visual
     {width}
@@ -395,9 +441,14 @@
         e.clientY + Math.random() - 0.5,
         selectedId
       );
+      // logic();
     }}
   />
-  <div class="controls" class:controls_opened={showSettings}>
+  <div
+    class="controls"
+    class:controls_opened={showSettings}
+    class:dispay-none={controlsHidden}
+  >
     {#if showSettings}
       <!-- <div class="controls__col"> -->
       <div class="controls-block">
@@ -408,12 +459,26 @@
           <button on:click={copyRules}>
             {getTranslation(lang, "copyLink")}
           </button>
+          <button
+            on:click={() => {
+              play = !play;
+            }}
+          >
+            {play ? "pause" : "play"}
+          </button>
         </div>
       </div>
       <div class="controls-block">
         <h2 class="controls-block__title">
           {getTranslation(lang, "currentWorldSettings")}
         </h2>
+        <InputRange
+          name={"link distance"}
+          min={0.001}
+          step={0.001}
+          max={MAX_DIST}
+          bind:value={linkDistance}
+        />
         <InputRange
           name={getTranslation(lang, "simulationsPerFrame")}
           min={1}
@@ -441,6 +506,14 @@
           step={0.01}
           bind:value={r}
         />
+        <InputRange
+          name={"borders"}
+          min={10}
+          max={300}
+          step={0.01}
+          bind:value={BORDER}
+        />
+        <Checkbox title={"Connect borders"} bind:checked={connectBorders} />
         <div class="buttons-row">
           <button
             on:click={() => {
@@ -455,6 +528,144 @@
             }}
           >
             {getTranslation(lang, "killAllParticles")}
+          </button>
+        </div>
+      </div>
+      <div class="controls-block">
+        <h2 class="controls-block__title">MAX_LINKS</h2>
+        {#each Object.entries(MAX_LINKS) as [k, v]}
+          <div class="max-links-input">
+            <span
+              class="table-label"
+              style={`background-color: ${COLORS[k]}; padding: 0 5px`}
+            >
+              {k}
+            </span>
+            <input
+              type="number"
+              value={v}
+              min="0"
+              max="3"
+              on:input={(e) => {
+                // @ts-ignore
+                MAX_LINKS[k] = +e.target.value;
+              }}
+            />
+          </div>
+        {/each}
+      </div>
+      <div class="controls-block">
+        <h2 class="controls-block__title">COUPLINGS</h2>
+        <table>
+          <tbody>
+            <tr class="couplings-row">
+              <th />
+              {#each Object.entries(COLORS.slice(0, RULE_SIZE)) as [i, color]}
+                <th class="table-label" style={`background-color: ${COLORS[i]}`}
+                  >{i}</th
+                >
+              {/each}
+            </tr>
+            {#each Object.entries(COUPLINGS) as [y, arr]}
+              <tr class="couplings-row">
+                <td class="table-label" style={`background-color: ${COLORS[y]}`}
+                  >{y}</td
+                >
+                {#each Object.entries(arr) as [x, val]}
+                  <td>
+                    <input
+                      type="number"
+                      value={val}
+                      min={-1}
+                      max={1}
+                      on:input={(e) => {
+                        // @ts-ignore
+                        COUPLINGS[y][x] = e.target.value;
+                      }}
+                    />
+                  </td>
+                {/each}
+              </tr>
+            {/each}
+          </tbody>
+        </table>
+      </div>
+      <!-- MAX_LINKS_PER_COLOR -->
+      <div class="controls-block">
+        <h2 class="controls-block__title">MAX_LINKS_PER_COLOR</h2>
+        <table>
+          <tbody>
+            <tr class="couplings-row">
+              <th />
+              {#each Object.entries(COLORS.slice(0, RULE_SIZE)) as [i, color]}
+                <th class="table-label" style={`background-color: ${COLORS[i]}`}
+                  >{i}</th
+                >
+              {/each}
+            </tr>
+            {#each Object.entries(MAX_LINKS_PER_COLOR) as [y, arr]}
+              <tr class="couplings-row">
+                <td class="table-label" style={`background-color: ${COLORS[y]}`}
+                  >{y}</td
+                >
+                {#each Object.entries(arr) as [x, val]}
+                  <td>
+                    <input
+                      type="number"
+                      value={val}
+                      min={0}
+                      max={3}
+                      on:input={(e) => {
+                        // @ts-ignore
+                        MAX_LINKS_PER_COLOR[y][x] = e.target.value;
+                      }}
+                    />
+                  </td>
+                {/each}
+              </tr>
+            {/each}
+          </tbody>
+        </table>
+      </div>
+      <div class="controls-block">
+        <h2 class="controls-block__title">Add particles</h2>
+        <div class="compact-inputs">
+          {#each Object.entries(COLORS.slice(0, RULE_SIZE)) as [i, color]}
+            <div class="max-links-input">
+              <span
+                class="table-label"
+                style={`background-color: ${color}; padding: 0 5px`}
+              >
+                {i}
+              </span>
+              <input
+                type="number"
+                value={addParticlesAmount[i]}
+                min="0"
+                max="3"
+                on:input={(e) => {
+                  // @ts-ignore
+                  addParticlesAmount[i] = +e.target.value || 0;
+                }}
+              />
+            </div>
+          {/each}
+        </div>
+        <div class="buttons-row">
+          <button
+            on:click={() => {
+              addParticlesAmount.slice(0, RULE_SIZE).forEach((amount, type) => {
+                for (let i = 0; i < amount; i++) {
+                  addParticle(
+                    Math.random() * width,
+                    Math.random() * height,
+                    type
+                  );
+                }
+              });
+            }}
+          >
+            Add particles
           </button>
         </div>
       </div>
