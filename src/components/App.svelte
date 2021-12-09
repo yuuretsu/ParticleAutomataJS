@@ -175,7 +175,7 @@
     document.body.removeChild(tempInput);
   }
 
-  function addParticle(x: number, y: number, type: number) {
+  function addParticle(x: number, y: number, type: number, name?: string) {
     let a: Particle = {
       x,
       y,
@@ -186,6 +186,7 @@
       sy: 0,
       bonds: [],
     };
+    if (name) a.name = name;
     const fx = Math.floor(x / MAX_DIST);
     const fy = Math.floor(y / MAX_DIST);
     fields[fx][fy].push(a);
@@ -399,6 +400,8 @@
 
   let controlsHidden = true;
 
+  let newParticleName = "";
+
   $: addParticlesAmount = COLORS.map(() => 0);
 
   // $: {
@@ -440,7 +443,8 @@
       addParticle(
         e.clientX + Math.random() - 0.5,
         e.clientY + Math.random() - 0.5,
-        selectedId
+        selectedId,
+        newParticleName
       );
       // logic();
     }}
@@ -706,6 +710,11 @@
         <ParticleSelector
           colors={COLORS.slice(0, COUPLINGS.length)}
           bind:selectedId
+        />
+        <input
+          class="particle-name-input"
+          type="text"
+          bind:value={newParticleName}
         />
       </div>
 

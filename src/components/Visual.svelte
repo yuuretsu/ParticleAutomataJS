@@ -96,6 +96,18 @@
         }
       }
     }
+    for (let i = 0; i < fw; i++) {
+      for (let j = 0; j < fh; j++) {
+        const field = fields[i][j];
+        for (let k = 0; k < field.length; k++) {
+          const a = field[k];
+          if (a.name) {
+            ctx.fillStyle = "white";
+            ctx.fillText(a.name, a.x + 10, a.y + 10);
+          }
+        }
+      }
+    }
   });
 </script>
 

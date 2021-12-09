@@ -7,4 +7,5 @@ export type Particle = {
   sx: number;
   sy: number;
   bonds: Particle[];
+  name?: string
 };
