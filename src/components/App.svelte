@@ -39,7 +39,8 @@
     Number(new URLSearchParams(location.search).get("max_dist")) || 100;
   let speedMultiplier =
     Number(new URLSearchParams(location.search).get("temperature")) || 4;
-  let BORDER = 10;
+  let BORDER_X = 10;
+  let BORDER_Y = 10;
   let selectedId = 0;
 
   let friction =
@@ -259,18 +260,18 @@
           a.x += a.sx;
           a.y += a.sy;
           if (connectBorders) {
-            if (a.x < BORDER) {
-              a.x = width - BORDER;
+            if (a.x < BORDER_X) {
+              a.x = width - BORDER_X;
               a.sx * -1;
-            } else if (a.x > width - BORDER) {
-              a.x = BORDER;
+            } else if (a.x > width - BORDER_X) {
+              a.x = BORDER_X;
               a.sx * -1;
             }
-            if (a.y < BORDER) {
-              a.y = height - BORDER;
+            if (a.y < BORDER_Y) {
+              a.y = height - BORDER_Y;
               a.sy * -1;
-            } else if (a.y > height - BORDER) {
-              a.y = BORDER;
+            } else if (a.y > height - BORDER_Y) {
+              a.y = BORDER_Y;
               a.sy * -1;
             }
           }
@@ -282,26 +283,26 @@
             a.sy /= magnitude;
           }
           if (!connectBorders) {
-            if (a.x < BORDER) {
+            if (a.x < BORDER_X) {
               a.sx += speedMultiplier * 0.05;
               if (a.x < 0) {
                 a.x = -a.x;
                 a.sx *= -0.5;
               }
-            } else if (a.x > width - BORDER) {
+            } else if (a.x > width - BORDER_X) {
               a.sx -= speedMultiplier * 0.05;
               if (a.x > width) {
                 a.x = width * 2 - a.x;
                 a.sx *= -0.5;
               }
             }
-            if (a.y < BORDER) {
+            if (a.y < BORDER_Y) {
               a.sy += speedMultiplier * 0.05;
               if (a.y < 0) {
                 a.y = -a.y;
                 a.sy *= -0.5;
               }
-            } else if (a.y > height - BORDER) {
+            } else if (a.y > height - BORDER_Y) {
               a.sy -= speedMultiplier * 0.05;
               if (a.y > height) {
                 a.y = height * 2 - a.y;
@@ -507,11 +508,18 @@
           bind:value={r}
         />
         <InputRange
-          name={"borders"}
+          name={"borders x"}
           min={10}
-          max={300}
+          max={window.innerWidth / 2}
           step={0.01}
-          bind:value={BORDER}
+          bind:value={BORDER_X}
+        />
+        <InputRange
+          name={"borders y"}
+          min={10}
+          max={window.innerHeight / 2}
+          step={0.01}
+          bind:value={BORDER_Y}
         />
         <Checkbox title={"Connect borders"} bind:checked={connectBorders} />
         <div class="buttons-row">
