@@ -714,6 +714,7 @@
         <input
           class="particle-name-input"
           type="text"
+          placeholder="Enter new particle name"
           bind:value={newParticleName}
         />
       </div>

@@ -183,3 +183,8 @@ td > input:focus {
   padding: 5px 10px;
   background-color: rgb(255 255 255 / 20%);
 }
+
+.particle-name-input::placeholder {
+  color: black;
+  opacity: 0.5;
+}
